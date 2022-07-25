@@ -108,5 +108,5 @@ def init_logging():
     # Initialize formatter
     logger = CustomLogger()
 
-    logger.make_logger("NAFF")
+    logger.make_logger("NAFF", only_console=True)
     logger.make_logger("Connect4")

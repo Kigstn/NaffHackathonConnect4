@@ -24,7 +24,7 @@ class CommandExtension(Extension):
     @slash_command(name="connect4", description="Play Connect 4")
     async def connect_4(self, ctx: InteractionContext):
         try:
-            game = Connect4(ctx)
+            game = Connect4(ctx=ctx, pvp=True)
         except GameExists as e:
             await ctx.send(
                 embeds=embed_message(
