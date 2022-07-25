@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import logging
 import random
 from typing import Literal, Optional
@@ -49,11 +50,11 @@ class Connect4:
         init=False, default=random.choice([True, False])
     )
 
-    def __init__(self, ctx: InteractionContext):
+    def __init__(self, ctx: InteractionContext, *args, **kwargs):
         # do not allow multiple games
         if game := _games.get(ctx.author.id):
             raise GameExists(game)
-        self.__attrs_init__(ctx)
+        self.__attrs_init__(ctx, *args, **kwargs)
 
     def __attrs_post_init__(self):
         self._field = [
@@ -78,7 +79,7 @@ class Connect4:
             Button(
                 custom_id=f"{self.ctx.author.id}|submit",
                 style=ButtonStyles.BLUE,
-                label="⏷",
+                label="🢃",
             ),
             Button(
                 custom_id=f"{self.ctx.author.id}|right_one",
@@ -122,10 +123,10 @@ class Connect4:
             member=self.ctx.author,
         )
         if winning_coords:
-            embed.footer = (
+            embed.set_footer(
                 f"{self.ctx.author.display_name} won!"
                 if not self._player_one_turn
-                else "Computer won!",
+                else "Computer won!"
             )
 
         # which player is what
@@ -142,10 +143,20 @@ class Connect4:
             console.print(players)
         players_text = capture.get()
 
-        # create the game table
+        # create the tables
         game = Table(show_header=False, show_footer=False, box=box.HEAVY)
-        for _ in range(7):
+        heading_rows = []
+        for i in range(len(self._field[0])):
             game.add_column(justify="center", vertical="middle")
+            style = "white"
+            if i == self._cursor_position:
+                style = "red" if not self._player_one_turn else "blue"
+            heading_rows.append(Text("  🢃   ", style=style))
+        heading = copy.deepcopy(game)
+        heading.box = None
+        heading.padding = 0
+        heading.add_row(*heading_rows)
+
         for i, row in enumerate(self._field):
             formatted = []
             for j, col in enumerate(row):
@@ -166,20 +177,15 @@ class Connect4:
                     )
             game.add_row(*formatted)
 
-        indicator_row = ["       " for _ in range(len(self._field[0]))]
-        style = "red" if self._player_one_turn else "blue"
-        indicator_row[self._cursor_position] = Text(" ⏷  ", style=style)    # noqa
-        game.add_row(*indicator_row)
-
-        # capture the ansi table
+        # capture the ansi tables
+        with console.capture() as capture:
+            console.print(heading)
+        heading_text = "\n".join(capture.get().split("\n")[:-1])
         with console.capture() as capture:
             console.print(game)
         table_text = "\n".join(capture.get().split("\n")[1:-2])
 
-        self.logger.debug(f"Played:\n{table_text}")
-        embed.description = (
-            f"""```ansi\n{players_text}\n```\n```ansi\n{table_text}\n```"""
-        )
+        embed.description = f"""```ansi\n{players_text}\n```\n```ansi\n{heading_text if not winning_coords else ""}\n⁣\n{table_text}\n```"""
         return embed
 
     def get_components(self, disable: bool = False) -> list[Button]:
@@ -308,11 +314,35 @@ class Connect4:
                 return
         await ctx.edit_origin(embeds=self.get_embed())
 
+    def insert_piece(self, symbol: Literal["O", "X"]) -> bool:
+        # check if this col is already full
+        if self._field[0][self._cursor_position] != "_":
+            return False
+
+        # insert the symbol in the row before the first symbol is found or the last row
+        for i, row in enumerate(self._field):
+            if row[self._cursor_position] != "_":
+                self._field[i - 1][self._cursor_position] = symbol
+                return True
+        self._field[i][self._cursor_position] = symbol  # noqa
+        return True
+
     async def do_turn(self, ctx: Optional[ComponentContext] = None):
         edit_call = ctx.edit_origin if ctx else self.message.edit
 
         # play round
         symbol = "X" if self._player_one_turn else "O"
+        if ctx:
+            if not self.insert_piece(symbol=symbol):  # noqa
+                await ctx.send(
+                    embeds=embed_message(
+                        "Connect 4 Game",
+                        f"That row is already full, please choose annother",
+                        member=ctx.author,
+                    ),
+                    ephemeral=True,
+                )
+                return
 
         # check winner
         winning_coords = self.check_won(symbol=symbol)  # noqa
@@ -324,11 +354,14 @@ class Connect4:
             components=self.get_components(disable=bool(winning_coords)),
         )
 
-        # next computer turn
-        if self.pvp and not self._player_one_turn and not winning_coords:
-            await self.computer_turn(symbol="O")
+        if winning_coords:
+            _games.pop(ctx.author.id)
+        else:
+            # next computer turn
+            if self.pvp and not self._player_one_turn:
+                await self.computer_turn(symbol="O")
 
     async def computer_turn(self, symbol: Literal["O", "X"]):
         # todo computer logic
-
+        return
         await self.do_turn()
