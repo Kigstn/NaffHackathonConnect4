@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  naff_hackathon_connect_4:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - naff_hackathon_connect_4-network
+    restart:
+      always
+
+networks:
+  naff_hackathon_connect_4-network:
