@@ -11,6 +11,7 @@ orjson = "^3.6.7"
 naff = "^1.0.0"
 rich = "^12.5.1"
 attrs = "^21.4.0"
+anyio = "^3.6.1"
 
 [tool.poetry.dev-dependencies]
 
