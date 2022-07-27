@@ -466,7 +466,7 @@ class Connect4:
                 await ctx.send(
                     embeds=embed_message(
                         "Connect 4 Game",
-                        f"That row is already full, please choose annother",
+                        f"That row is already full, please choose another",
                         member=ctx.author,
                     ),
                     ephemeral=True,
@@ -563,19 +563,13 @@ class Connect4:
         winner = self.get_winner_symbol(field)
         valid_moves = self._get_valid_moves(field)
         if depth == 0 or winner or not valid_moves:
-            if winner == "O":
-                return None, 1
-            elif winner == "X":
-                return None, -1
-            else:
-                return None, 0
-            # match winner:
-            #     case "O":
-            #         return None, 1
-            #     case "X":
-            #         return None, -1
-            #     case None:
-            #         return None, 0
+            match winner:
+                case "O":
+                    return None, 1
+                case "X":
+                    return None, -1
+                case None:
+                    return None, 0
 
         # max scores for each option
         if is_maximizing:
@@ -590,8 +584,8 @@ class Connect4:
         for cursor_position in valid_moves:
             field_copy = copy.deepcopy(field)
             self.insert_piece(
-                symbol=symbol, position=cursor_position, field=field_copy
-            )  # noqa
+                symbol=symbol, position=cursor_position, field=field_copy  # noqa
+            )
             _, minimax_score = self.__computer_minimax(
                 is_maximizing=not is_maximizing,
                 field=field_copy,
@@ -617,3 +611,7 @@ class Connect4:
                 beta = min(beta, best_score)
 
         return best_move, best_score
+
+    async def disable(self):
+        await self.message.edit(embeds=self.get_embed(game_over=True), components=[])
+        _games.pop(self.ctx.author.id)

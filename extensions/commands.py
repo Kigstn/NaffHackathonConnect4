@@ -65,6 +65,66 @@ class CommandExtension(Extension):
             await game.play()
 
 
+    @slash_command(
+        name="connect4",
+        description="Play Connect 4",
+        sub_cmd_name="versus",
+        sub_cmd_description="Play vs another player",
+    )
+    async def versus(self, ctx: InteractionContext):
+        try:
+            game = Connect4(ctx=ctx, pvp=False)
+        except GameExists as e:
+            await ctx.send(
+                embeds=embed_message(
+                    "Connect 4 Game",
+                    "You already have a game in progress, please finish that first.",
+                    member=ctx.author,
+                ),
+                ephemeral=True,
+                components=Button(
+                    style=ButtonStyles.URL,
+                    label="Go To Game",
+                    url=e.game.message.jump_url,
+                ),
+            )
+        else:
+            await game.play()
+
+    @slash_command(
+        name="connect4",
+        description="Play Connect 4",
+        sub_cmd_name="delete",
+        sub_cmd_description="Delete your running game",
+    )
+    async def versus(self, ctx: InteractionContext):
+        game = Connect4.get_existing(author_id=ctx.author.id)
+        if game:
+            await game.disable()
+
+            await ctx.send(
+                embeds=embed_message(
+                    "Connect 4 Game",
+                    "Successfully deleted game.",
+                    member=ctx.author,
+                ),
+                ephemeral=True,
+                components=Button(
+                    style=ButtonStyles.URL,
+                    label="Go To Game",
+                    url=game.message.jump_url,
+                ),
+            )
+        else:
+            await ctx.send(
+                embeds=embed_message(
+                    "Connect 4 Game",
+                    "You do not have any active game",
+                    member=ctx.author,
+                ),
+                ephemeral=True
+            )
+
 def setup(bot: CustomClient):
     """Let naff load the extension"""
 
