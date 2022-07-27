@@ -92,17 +92,17 @@ class Connect4:
             ),
             Button(
                 custom_id=f"{self.ctx.author.id}|left_one",
-                style=ButtonStyles.RED,
+                style=ButtonStyles.BLUE,
                 label="‹",
             ),
             Button(
                 custom_id=f"{self.ctx.author.id}|submit",
-                style=ButtonStyles.GREEN,
+                style=ButtonStyles.BLUE,
                 label="🢃",
             ),
             Button(
                 custom_id=f"{self.ctx.author.id}|right_one",
-                style=ButtonStyles.RED,
+                style=ButtonStyles.BLUE,
                 label="›",
             ),
             Button(
@@ -169,6 +169,7 @@ class Connect4:
 
         # which player is what
         console = Console()
+        player_two_name = self._player_two.display_name if self._player_two else "Waiting for player..."
         players = Text.assemble(
             ("● ", "white"),
             " - Free\n",
@@ -177,7 +178,7 @@ class Connect4:
             f" - {self.ctx.author.display_name}\n",
             ("●", "red"),
             ("●", "green") if winning_coords and self._player_one_turn else " ",
-            " - Computer",
+            " - Computer" if self.pvp else f" - {player_two_name}",
         )
         with console.capture() as capture:
             console.print(players)
@@ -234,8 +235,14 @@ class Connect4:
         return embed
 
     def get_components(self) -> list[Button]:
+        for component in self._components:
+            if self._player_one_turn:
+                component.style = ButtonStyles.BLUE
+            else:
+                component.style = ButtonStyles.RED
+
+        # disable when it's not the players turn
         if self.pvp:
-            # disable when it's not the players turn
             for component in self._components:
                 component.disabled = not self._player_one_turn
         return self._components
@@ -548,7 +555,6 @@ class Connect4:
         else:
             return random.choice(self._get_valid_moves())
 
-    # todo give it a chance no to see a win
     def __computer_minimax(
         self,
         is_maximizing: bool,

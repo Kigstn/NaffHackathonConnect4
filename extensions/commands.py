@@ -18,9 +18,6 @@ from core.connect_4 import Connect4, GameExists
 from core.misc import embed_message
 
 
-# todo delete game command
-
-
 class CommandExtension(Extension):
     bot: CustomClient
 
@@ -97,7 +94,7 @@ class CommandExtension(Extension):
         sub_cmd_name="delete",
         sub_cmd_description="Delete your running game",
     )
-    async def versus(self, ctx: InteractionContext):
+    async def delete(self, ctx: InteractionContext):
         game = Connect4.get_existing(author_id=ctx.author.id)
         if game:
             await game.disable()

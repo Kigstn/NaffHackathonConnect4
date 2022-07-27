@@ -20,10 +20,11 @@ if __name__ == "__main__":
 
     # create our bot instance
     bot = CustomClient(
-        intents=Intents.DEFAULT,  # intents are what events we want to receive from discord, `DEFAULT` is usually fine
+        intents=Intents.new(),  # intents are what events we want to receive from discord, `DEFAULT` is usually fine
         auto_defer=True,  # automatically deferring interactions
         activity="Connecting everything in 4s",  # the status message of the bot
-        logger=logging.getLogger("NAFF")
+        logger=logging.getLogger("NAFF"),
+
     )
 
     # load the debug extension if that is wanted
