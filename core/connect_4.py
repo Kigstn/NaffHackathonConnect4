@@ -168,7 +168,7 @@ class Connect4:
         )
 
         # which player is what
-        console = Console()
+        console = Console(color_system="truecolor")
         player_two_name = self._player_two.display_name if self._player_two else "Waiting for player..."
         players = Text.assemble(
             ("● ", "white"),
